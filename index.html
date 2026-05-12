@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="ku" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>وەرگێڕی زمانی سۆرانی - TILIVIZO</title>
+    <style>
+        :root { 
+            --accent: #f0b90b; 
+            --bg: #0f0f10; 
+            --card: #1a1a1e; 
+            --success: #22c55e;
+            --error: #ef4444;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: var(--bg); 
+            color: white; 
+            font-family: 'Segoe UI', Tahoma, sans-serif; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            padding: 20px; 
+        }
+        .container { 
+            width: 100%; 
+            max-width: 700px; 
+            background: var(--card); 
+            padding: 30px; 
+            border-radius: 20px; 
+            border: 1px solid rgba(255,255,255,0.1); 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+        }
+        h2 { 
+            color: var(--accent); 
+            margin-bottom: 10px; 
+            text-align: center; 
+            font-size: 1.5rem;
+        }
+        .subtitle {
+            text-align: center;
+            color: #888;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        textarea { 
+            width: 100%; 
+            height: 150px; 
+            background: #000; 
+            color: white; 
+            border: 1px solid #333; 
+            border-radius: 12px; 
+            padding: 15px; 
+            font-size: 1rem; 
+            margin-bottom: 15px; 
+            outline: none; 
+            resize: vertical; 
+            text-align: right; 
+            font-family: inherit;
+        }
+        textarea:focus {
+            border-color: var(--accent);
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        button { 
+            flex: 1;
+            background: var(--accent); 
+            color: black; 
+            border: none; 
+            padding: 12px; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            font-weight: bold; 
+            font-size: 1rem; 
+            transition: 0.3s; 
+        }
+        button:hover { 
+            background: #d4a30a; 
+            transform: translateY(-2px); 
+        }
+        button.secondary {
+            background: #333;
+            color: white;
+        }
+        button.secondary:hover {
+            background: #444;
+        }
+        .result-box { 
+            background: rgba(240, 185, 11, 0.05); 
+            padding: 20px; 
+            border-radius: 12px; 
+            border: 1px dashed var(--accent); 
+            min-height: 100px; 
+            text-align: right; 
+            line-height: 1.8; 
+            font-size: 1.1rem; 
+            color: #fff; 
+            position: relative;
+        }
+        .result-label {
+            position: absolute;
+            top: -10px;
+            right: 15px;
+            background: var(--card);
+            padding: 0 10px;
+            color: var(--accent);
+            font-size: 0.8rem;
+        }
+        .loader { 
+            display: none; 
+            color: var(--accent); 
+            font-size: 0.9rem; 
+            text-align: center; 
+            margin-bottom: 15px; 
+            padding: 10px;
+        }
+        .loader.active {
+            display: block;
+        }
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #333;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-value {
+            color: var(--accent);
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+        .stat-label {
+            color: #888;
+            font-size: 0.8rem;
+        }
+        @media (max-width: 500px) {
+            .container { padding: 20px; }
+            h2 { font-size: 1.2rem; }
+        }
+    </style>
+<base target="_blank">
+</head>
+<body>
+
+<div class="container">
+    <h2>وەرگێڕی تایبەتی سۆرانی ✨</h2>
+    <p class="subtitle">دەق بە هەر زمانێک بنووسە، ئێمە بۆ سۆرانییەکی پاک وەرئەگێڕینەوە</p>
+
+    <textarea id="inputText" placeholder="دەقەکە لێرە بنووسە... بۆ نموونە: Hello, how are you?"></textarea>
+
+    <div id="loading" class="loader">⏳ خەریکی وەرگێڕان و چاککردنی سۆرانییەکەیە...</div>
+
+    <div class="button-group">
+        <button onclick="translateNow()">🔁 وەرگێڕان</button>
+        <button class="secondary" onclick="copyResult()">📋 لەبەرگرتنەوە</button>
+        <button class="secondary" onclick="clearAll()">🗑️ پاککردنەوە</button>
+    </div>
+
+    <div class="result-box">
+        <span class="result-label">ئەنجامی وەرگێڕان</span>
+        <div id="outputText">ئەنجام لێرە بە سۆرانییەکی پاک دەردەکەوێت...</div>
+    </div>
+
+    <div class="stats">
+        <div class="stat-item">
+            <div class="stat-value" id="wordCount">0</div>
+            <div class="stat-label">وشە</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="charCount">0</div>
+            <div class="stat-label">پیت</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value" id="fixCount">0</div>
+            <div class="stat-label">چاککردن</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let lastFixCount = 0;
+
+    async function translateNow() {
+        const text = document.getElementById('inputText').value;
+        const output = document.getElementById('outputText');
+        const loader = document.getElementById('loading');
+
+        if (!text.trim()) {
+            alert("تکایە دەقێک بنووسە!");
+            return;
+        }
+
+        loader.classList.add('active');
+        output.innerText = "...";
+
+        try {
+            // Use Google Translate API
+            const res = await fetch(`https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=ku&dt=t&q=${encodeURIComponent(text)}`);
+
+            if (!res.ok) throw new Error('Network error');
+
+            const data = await res.json();
+
+            let translatedText = "";
+            if (data && data[0]) {
+                data[0].forEach(item => {
+                    if (item[0]) translatedText += item[0];
+                });
+            }
+
+            if (!translatedText) throw new Error('No translation');
+
+            // Apply Sorani fixes
+            let soraniText = fixToSorani(translatedText);
+
+            // Update stats
+            updateStats(text, soraniText);
+
+            output.innerText = soraniText;
+        } catch (error) {
+            console.error(error);
+            output.innerText = "هەڵەیەک ڕوویدا!
+
+تکایە:
+١. پەیوەندی ئینتەرنێت بپشکنە
+٢. دووبارە هەوڵبدەوە
+٣. ئەگەر کێشەکە درێژە خایاند، لەگەڵ گەشەپێدەر پەیوەندی بگرە";
+        } finally {
+            loader.classList.remove('active');
+        }
+    }
+
+    function fixToSorani(text) {
+        let fixed = text;
+        let fixCount = 0;
+
+        // Comprehensive Kurmanji to Sorani dictionary
+        const dictionary = {
+            // Common words
+            "Erê": "بەڵێ", "erê": "بەڵێ",
+            "Na ": "نەخێر ", "na ": "نەخێر ",
+            "Spas": "سوپاس", "spas": "سوپاس",
+            "Silav": "سڵاو", "silav": "سڵاو",
+            "Xêr hatî": "بەخێربێی", "xêr hatî": "بەخێربێی",
+
+            // Pronouns
+            "Ez ": "من ", "ez ": "من ",
+            "Tu ": "تۆ ", "tu ": "تۆ ",
+            "Ew ": "ئەو ", "ew ": "ئەو ",
+            "Em ": "ئێمە ", "em ": "ئێمە ",
+            "Hûn ": "ئێوە ", "hûn ": "ئێوە ",
+            "Ew ": "ئەوان ", "ew ": "ئەوان ",
+
+            // Common verbs
+            "dibêjim": "دەڵێم", "dibêjî": "دەڵێی", "dibêje": "دەڵێت",
+            "dibînin": "دەبینین", "dibînî": "دەبینی",
+            "diçim": "دەچم", "diçî": "دەچی", "diçe": "دەچێت",
+            "tê": "دێت", "têm": "دێم", "têyî": "دێی",
+
+            // Prepositions
+            "Lê ": "بەڵام ", "lê ": "بەڵام ",
+            "Ji ": "لە ", "ji ": "لە ",
+            "Di ": "لە ", "di ": "لە ",
+            "Bi ": "بە ", "bi ": "بە ",
+            "Bo ": "بۆ ", "bo ": "بۆ ",
+            "Li ": "لە ", "li ": "لە ",
+
+            // Questions
+            "Çi ": "چی ", "çi ": "چی ",
+            "Kî ": "کێ ", "kî ": "کێ ",
+            "Kengî ": "کەی ", "kengî ": "کەی ",
+            "Çawa ": "چۆن ", "çawa ": "چۆن ",
+            "Çima ": "بۆچی ", "çima ": "بۆچی ",
+            "Kû ": "لەکوێ ", "kû ": "لەکوێ ",
+
+            // Numbers
+            "yek": "یەک", "du": "دوو", "sê": "سێ", "çar": "چوار",
+            "pênc": "پێنج", "şeş": "شەش", "heft": "حەوت", "heşt": "هەشت",
+            "neh": "نۆ", "deh": "دە",
+
+            // Time
+            "roj": "ڕۆژ", "meh": "مانگ", "sal": "ساڵ",
+            "seet": "کاتژمێر", "deqîqe": "خولەک",
+            "sibê": "بەیانی", "îro": "ئەمڕۆ", "duh": "دوێنێ",
+
+            // Family
+            "bav": "باوک", "dayik": "دایک", "bira": "برا",
+            "xûşk": "خوشک", "kur": "کوڕ", "keç": "کچ",
+
+            // Adjectives
+            "baş": "باش", "xirab": "خراپ", "mezin": "گەورە",
+            "biçûk": "بچووک", "nû": "نوێ", "kevn": "کۆن",
+            "sork": "سۆر", "spî": "سپی", "reş": "ڕەش",
+            "zelal": "ڕوون", "tari": "تاریک",
+
+            // Food
+            "nan": "نان", "av": "ئاو", "çay": "چای",
+            "xwarin": "خواردن", "fêkî": "میوە",
+
+            // Places
+            "mal": "ماڵ", "dibistan": "قوتابخانە",
+            "bajar": "شار", "gund": "گوند",
+            "nava": "ناو", "derve": "دەرەوە",
+
+            // Technology
+            "têlefon": "تەلەفۆن", "kompîtûr": "کۆمپیوتەر",
+            "înternet": "ئینتەرنێت", "televîzyon": "تەلەڤیزیۆن",
+
+            // Common phrases
+            "Şev baş": "شەو باش",
+            "Roj baş": "ڕۆژ باش",
+            "Xatirê te": "خاترەت جێ",
+            "Bibore": "ببورە",
+            "Fêr bûm": "فێر بووم",
+            "Nizanim": "نازانم",
+            "Dizanim": "دەزانم",
+            "Divê": "پێویستە",
+            "Gelek": "زۆر", "zewicî": "زۆر",
+            "kêm": "کەم",
+
+            // Fix common Google Translate issues
+            "kurdi": "کوردی", "Kurdi": "کوردی",
+            "Ereb": "عەرەب", "ereb": "عەرەب",
+            "Tirk": "تورک", "tirk": "تورک",
+            "Îran": "ئێران", "îran": "ئێران",
+            "Îraq": "عێراق", "îraq": "عێراق",
+            "Sûri": "سووریا", "sûri": "سووریا",
+        };
+
+        // Apply replacements
+        for (const [kurmanji, sorani] of Object.entries(dictionary)) {
+            const regex = new RegExp(kurmanji.replace(/[.*+?^${}()|[\]\]/g, '\$&'), 'g');
+            const matches = fixed.match(regex);
+            if (matches) {
+                fixCount += matches.length;
+                fixed = fixed.replace(regex, sorani);
+            }
+        }
+
+        // Fix common character issues
+        fixed = fixed.replace(/î/g, 'ی').replace(/Î/g, 'ی');
+        fixed = fixed.replace(/ê/g, 'ێ').replace(/Ê/g, 'ێ');
+        fixed = fixed.replace(/ş/g, 'ش').replace(/Ş/g, 'ش');
+        fixed = fixed.replace(/ç/g, 'چ').replace(/Ç/g, 'چ');
+        fixed = fixed.replace(/û/g, 'وو').replace(/Û/g, 'وو');
+        fixed = fixed.replace(/ê/g, 'ە').replace(/Ê/g, 'ە');
+
+        lastFixCount = fixCount;
+        return fixed;
+    }
+
+    function updateStats(input, output) {
+        const words = output.trim().split(/\s+/).length;
+        const chars = output.length;
+        document.getElementById('wordCount').innerText = words;
+        document.getElementById('charCount').innerText = chars;
+        document.getElementById('fixCount').innerText = lastFixCount;
+    }
+
+    function copyResult() {
+        const output = document.getElementById('outputText').innerText;
+        if (output && output !== 'ئەنجام لێرە بە سۆرانییەکی پاک دەردەکەوێت...') {
+            navigator.clipboard.writeText(output).then(() => {
+                alert('✅ دەقەکە لەبەرگیرایەوە!');
+            }).catch(() => {
+                // Fallback
+                const textarea = document.createElement('textarea');
+                textarea.value = output;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('✅ دەقەکە لەبەرگیرایەوە!');
+            });
+        }
+    }
+
+    function clearAll() {
+        document.getElementById('inputText').value = '';
+        document.getElementById('outputText').innerText = 'ئەنجام لێرە بە سۆرانییەکی پاک دەردەکەوێت...';
+        document.getElementById('wordCount').innerText = '0';
+        document.getElementById('charCount').innerText = '0';
+        document.getElementById('fixCount').innerText = '0';
+    }
+
+    // Allow Ctrl+Enter to translate
+    document.getElementById('inputText').addEventListener('keydown', function(e) {
+        if (e.ctrlKey && e.key === 'Enter') {
+            translateNow();
+        }
+    });
+</script>
+
+</body>
+</html>
